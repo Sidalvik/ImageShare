@@ -1,0 +1,7 @@
+# Защита от выполнения PHP в директории uploads
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteCond %{REQUEST_URI} ^/uploads/.*\.php$
+    RewriteRule .* - [F,L]
+</IfModule>
+

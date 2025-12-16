@@ -1,0 +1,13 @@
+# Загруженные файлы
+uploads/*
+!uploads/.gitkeep
+
+# Временные файлы
+*.tmp
+*.log
+
+# Системные файлы
+.osp
+.DS_Store
+Thumbs.db
+robots.txt
