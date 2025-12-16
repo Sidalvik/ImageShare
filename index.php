@@ -44,12 +44,17 @@ function getFilesByDate() {
             $originalName = $metadata ? $metadata['original_name'] : basename($file);
             $uploadDateTime = $metadata && isset($metadata['upload_date']) ? $metadata['upload_date'] : null;
             
+            // Получаем размер файла
+            $fileSize = @filesize($file);
+            $formattedSize = formatFileSize($fileSize);
+            
             $filesByDate[$date][] = [
                 'path' => $file,
                 'name' => basename($file),
                 'original_name' => $originalName,
                 'date' => $date,
                 'upload_datetime' => $uploadDateTime,
+                'size' => $formattedSize,
                 'url' => str_replace('\\', '/', $file),
                 'type' => getFileType($file)
             ];
@@ -74,6 +79,21 @@ function getFileType($file) {
         return 'video';
     }
     return 'unknown';
+}
+
+// Форматирование размера файла
+function formatFileSize($bytes) {
+    if ($bytes === false || $bytes < 0) {
+        return '0 B';
+    }
+    
+    if ($bytes < 1024) {
+        return number_format($bytes, 0, '.', '') . ' B';
+    } elseif ($bytes < 1024 * 1024) {
+        return number_format($bytes / 1024, 2, '.', '') . ' KB';
+    } else {
+        return number_format($bytes / (1024 * 1024), 2, '.', '') . ' MB';
+    }
 }
 
 $filesByDate = getFilesByDate();
@@ -174,6 +194,9 @@ $filesByDate = getFilesByDate();
                                             }
                                             ?>
                                         </div>
+                                        <?php if (isset($file['size'])): ?>
+                                            <div class="card-size"><?php echo htmlspecialchars($file['size']); ?></div>
+                                        <?php endif; ?>
                                         <?php if (isset($file['original_name']) && $file['original_name'] !== $file['name']): ?>
                                             <div class="original-name"><?php echo htmlspecialchars($file['original_name']); ?></div>
                                         <?php endif; ?>
