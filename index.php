@@ -3,6 +3,7 @@
 function getFileMetadata($filePath) {
     $extension = pathinfo($filePath, PATHINFO_EXTENSION);
     $baseName = pathinfo($filePath, PATHINFO_FILENAME);
+    // Метаданные хранятся в файле с тем же именем, но расширением .txt
     $metaFilePath = dirname($filePath) . '/' . $baseName . '.txt';
     
     if (file_exists($metaFilePath) && is_readable($metaFilePath)) {
@@ -18,6 +19,31 @@ function getFileMetadata($filePath) {
     return null;
 }
 
+// Форматирование размера файла
+function formatFileSize($bytes) {
+    if ($bytes === false || $bytes < 0) {
+        return '0 B';
+    }
+    
+    if ($bytes < 1024) {
+        return number_format($bytes, 0, '.', '') . ' B';
+    } elseif ($bytes < 1024 * 1024) {
+        return number_format($bytes / 1024, 2, '.', '') . ' KB';
+    } else {
+        return number_format($bytes / (1024 * 1024), 2, '.', '') . ' MB';
+    }
+}
+
+// Форматирование даты для отображения (YYYYMMDD -> YYYY-MM-DD)
+function formatDateForDisplay($dateRaw) {
+    // Проверяем, что дата в формате YYYYMMDD (8 цифр)
+    if (preg_match('/^(\d{4})(\d{2})(\d{2})$/', $dateRaw, $matches)) {
+        return $matches[1] . '-' . $matches[2] . '-' . $matches[3];
+    }
+    // Если формат не распознан, возвращаем как есть
+    return $dateRaw;
+}
+
 // Функция для получения всех файлов, отсортированных по дате
 function getFilesByDate() {
     $filesByDate = [];
@@ -30,7 +56,9 @@ function getFilesByDate() {
     $dates = array_filter(glob($uploadDir . '*'), 'is_dir');
     
     foreach ($dates as $dateDir) {
-        $date = basename($dateDir);
+        $dateRaw = basename($dateDir);
+        // Преобразуем формат даты из YYYYMMDD в YYYY-MM-DD для отображения
+        $date = formatDateForDisplay($dateRaw);
         $files = array_filter(glob($dateDir . '/*'), 'is_file');
         
         foreach ($files as $file) {
@@ -48,11 +76,12 @@ function getFilesByDate() {
             $fileSize = @filesize($file);
             $formattedSize = formatFileSize($fileSize);
             
-            $filesByDate[$date][] = [
+            $filesByDate[$dateRaw][] = [
                 'path' => $file,
                 'name' => basename($file),
                 'original_name' => $originalName,
                 'date' => $date,
+                'date_raw' => $dateRaw,
                 'upload_datetime' => $uploadDateTime,
                 'size' => $formattedSize,
                 'url' => str_replace('\\', '/', $file),
@@ -79,21 +108,6 @@ function getFileType($file) {
         return 'video';
     }
     return 'unknown';
-}
-
-// Форматирование размера файла
-function formatFileSize($bytes) {
-    if ($bytes === false || $bytes < 0) {
-        return '0 B';
-    }
-    
-    if ($bytes < 1024) {
-        return number_format($bytes, 0, '.', '') . ' B';
-    } elseif ($bytes < 1024 * 1024) {
-        return number_format($bytes / 1024, 2, '.', '') . ' KB';
-    } else {
-        return number_format($bytes / (1024 * 1024), 2, '.', '') . ' MB';
-    }
 }
 
 $filesByDate = getFilesByDate();
@@ -154,7 +168,7 @@ $filesByDate = getFilesByDate();
             <?php else: ?>
                 <?php foreach ($filesByDate as $date => $files): ?>
                     <div class="date-section">
-                        <h2 class="date-header"><?php echo htmlspecialchars($date); ?></h2>
+                        <h2 class="date-header"><?php echo htmlspecialchars(formatDateForDisplay($date)); ?></h2>
                         <div class="cards-grid">
                             <?php foreach ($files as $file): ?>
                                 <div class="card">

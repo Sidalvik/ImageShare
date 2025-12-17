@@ -74,8 +74,8 @@ if ($currentTotalSize + $file['size'] > $maxTotalSize) {
     exit;
 }
 
-// Создание директории по дате в формате YYYY-MM-DD
-$dateDir = date('Y-m-d');
+// Создание директории по дате в формате YYYYMMDD
+$dateDir = date('Ymd');
 $uploadDir = $baseUploadDir . $dateDir . '/';
 
 // Создание директории с датой, если её нет
@@ -107,19 +107,20 @@ if (empty($extension)) {
     $extension = isset($mimeToExt[$file['type']]) ? $mimeToExt[$file['type']] : 'bin';
 }
 
-// Формат даты и времени: YYYY-MM-DD--HH-mm-ss
-$dateTime = date('Y-m-d--H-i-s');
+// Формат даты и времени: YYYYMMDDHHmmss
+$dateTime = date('YmdHis');
 
 // Определение порядкового номера (NNNNNN - 6 цифр)
 $sequenceNumber = 1;
-$pattern = $uploadDir . $dateTime . '_*.*';
+$pattern = $uploadDir . $dateTime . '*.*';
 $filesInDir = glob($pattern);
 if (!empty($filesInDir)) {
     // Находим максимальный номер среди существующих файлов
     $maxNumber = 0;
     foreach ($filesInDir as $existingFile) {
         $basename = basename($existingFile);
-        if (preg_match('/' . preg_quote($dateTime, '/') . '_(\d{6})\./', $basename, $matches)) {
+        // Ищем файлы с форматом YYYYMMDDHHmmssNNNNNN.extension
+        if (preg_match('/' . preg_quote($dateTime, '/') . '(\d{6})\./', $basename, $matches)) {
             $num = (int)$matches[1];
             if ($num > $maxNumber) {
                 $maxNumber = $num;
@@ -132,14 +133,14 @@ if (!empty($filesInDir)) {
 // Форматируем номер с ведущими нулями (6 цифр)
 $sequenceNumberFormatted = str_pad($sequenceNumber, 6, '0', STR_PAD_LEFT);
 
-// Формируем имя файла
-$fileName = $dateTime . '_' . $sequenceNumberFormatted . '.' . $extension;
+// Формируем имя файла: YYYYMMDDHHmmssNNNNNN.extension
+$fileName = $dateTime . $sequenceNumberFormatted . '.' . $extension;
 $targetPath = $uploadDir . $fileName;
 
 // Перемещение файла
 if (move_uploaded_file($file['tmp_name'], $targetPath)) {
     // Сохранение метаданных в текстовый файл
-    $metaFileName = $dateTime . '_' . $sequenceNumberFormatted . '.txt';
+    $metaFileName = $dateTime . $sequenceNumberFormatted . '.txt';
     $metaFilePath = $uploadDir . $metaFileName;
     
     $uploadDateTime = date('Y-m-d H:i:s');
